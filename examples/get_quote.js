@@ -1,10 +1,20 @@
-var Robinhood = require('../src/robinhood');
+import Robinhood from "../index.js"; // Importing from the refactored package
 
-Robinhood(null).quote_data('GOOG', function(error, response, body) {
-    if (error) {
-        console.error(error);
-        process.exit(1);
-    }
+// Assuming you have username and password in your .env file
+require("dotenv").config();
 
-    console.log(body);
-});
+async function main() {
+  try {
+    const robinhood = await Robinhood({
+      username: process.env.ROBINHOOD_USERNAME,
+      password: process.env.ROBINHOOD_PASSWORD,
+    });
+
+    const quote = await robinhood.quote_data("GOOG");
+    console.log(quote);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+main();
