@@ -1,32 +1,42 @@
 import fetch from "node-fetch";
 import { robinhoodApiBaseUrl, clientId, endpoints } from "./constants.js";
+import { v4 as uuidv4 } from "uuid";
 
 export async function authenticate(credentials) {
-  const { username, password, mfa_code, device_token } = credentials;
+  if (credentials.token) {
+    // If a token is provided, return it directly
+    return { access_token: credentials.token };
+  }
+
+  const { username, password, mfa_code } = credentials;
   const headers = {
     Host: "api.robinhood.com",
     Accept: "*/*",
     "Accept-Encoding": "gzip, deflate",
     Referer: "https://robinhood.com/",
     Origin: "https://robinhood.com",
+    "Content-Type": "application/x-www-form-urlencoded",
   };
 
-  const form = {
+  const form = new URLSearchParams({
     grant_type: "password",
     scope: "internal",
     client_id: clientId,
     expires_in: 86400,
     password: password,
     username: username,
-    device_token: device_token,
-    mfa_code: mfa_code,
-  };
+    device_token: uuidv4(),
+  });
+
+  if (mfa_code) {
+    form.append("mfa_code", mfa_code);
+  }
 
   try {
     const response = await fetch(robinhoodApiBaseUrl + endpoints.login, {
       method: "POST",
       headers: headers,
-      body: JSON.stringify(form),
+      body: form.toString(),
     });
 
     const data = await response.json();
