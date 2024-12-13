@@ -64,8 +64,22 @@ declare class RobinhoodApi {
 }
 
 declare const Robinhood: (credentials: {
-  username: string;
-  password: string;
-}) => Promise<RobinhoodApi>;
+  username?: string;
+  password?: string;
+  token?: string;
+}) => Promise<
+  RobinhoodApi & {
+    set_mfa_code: (mfaCode: string) => Promise<RobinhoodApi>;
+    auth_token: () => string;
+    accounts: () => Promise<any>;
+    instruments: (symbol?: string) => Promise<any>;
+    nonzero_positions: () => Promise<any>;
+    place_buy_order: (options: any) => Promise<any>;
+    place_sell_order: (options: any) => Promise<any>;
+    orders: (options?: any) => Promise<any>;
+  }
+>;
+
+export = Robinhood;
 
 export = Robinhood;
