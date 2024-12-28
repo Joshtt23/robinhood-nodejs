@@ -5,11 +5,8 @@ export default async function Robinhood(credentials) {
   try {
     if (credentials.token) {
       // If a token is provided, initialize and return RobinhoodApi instance
-      const robinhoodApi = new RobinhoodApi(credentials);
-      robinhoodApi.headers = {
-        Authorization: `Bearer ${credentials.token}`,
-      };
-      return robinhoodApi;
+      const robinhoodApi = new RobinhoodApi(credentials.token); // Changed to pass just the token
+      return robinhoodApi; // Removed redundant header setting since it's done in constructor
     }
     let authResponse = await authenticate(credentials);
 
@@ -20,10 +17,10 @@ export default async function Robinhood(credentials) {
           const mfaOptions = {
             ...credentials,
             mfa_code: mfaCode,
-            device_token: authResponse.device_token, // Pass the device token
+            device_token: authResponse.device_token,
           };
           // Retry authentication with the MFA code
-          return authenticate(mfaOptions); // Return the result of authenticate
+          return authenticate(mfaOptions);
         },
         mfa_type: authResponse.mfa_type,
       };
@@ -48,11 +45,11 @@ export default async function Robinhood(credentials) {
           }
 
           // Retry authentication with the challenge response
-          return authenticate({ // Return the result of authenticate
+          return authenticate({
             ...credentials,
             challenge_id: authResponse.challenge_id,
             challenge_response: challengeResponse,
-            device_token: authResponse.device_token, // Pass the device token
+            device_token: authResponse.device_token,
           });
         },
         challenge_details: {
@@ -75,10 +72,10 @@ export default async function Robinhood(credentials) {
           );
           if (verificationResult) {
             // If verification is successful, retry authentication
-            return await authenticate({ // Added await here
+            return await authenticate({
               ...credentials,
               mfa_code: verificationCode,
-              deviceToken: deviceToken, // Pass the device token
+              deviceToken: deviceToken,
             });
           } else {
             throw new Error("Verification failed.");
@@ -93,14 +90,8 @@ export default async function Robinhood(credentials) {
       };
     } else if (authResponse.access_token) {
       // Authentication successful, initialize and return RobinhoodApi instance
-      const robinhoodApi = new RobinhoodApi(authResponse.access_token);
-      robinhoodApi.headers = {
-        Authorization: `Bearer ${authResponse.access_token}`,
-      };
-      return {
-        ...authResponse, // Include the tokens in the response
-        robinhoodApi, // Return the initialized instance
-      };
+      const robinhoodApi = new RobinhoodApi(authResponse.access_token); // Changed to pass just the token
+      return robinhoodApi; // Return just the API instance to match token path behavior
     } else {
       console.error("Authentication failed:", authResponse);
       throw new Error("Authentication failed: Unexpected response");
