@@ -198,6 +198,19 @@ export default class RobinhoodApi {
     return response.json();
   }
 
+  async instruments_by_id(id) {
+    const response = await fetch(
+      robinhoodApiBaseUrl + endpoints.instruments + id + "/",
+      {
+        headers: this.headers,
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch instruments by id");
+    }
+    return response.json();
+  }
+
   async instruments(symbol) {
     const response = await fetch(
       robinhoodApiBaseUrl +
