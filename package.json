@@ -1,5 +1,5 @@
 {
-  "name": "robinhood-node",
+  "name": "robinhood-nodev2",
   "version": "2.0.0",
   "description": "Comprehensive Node.js API wrapper for the Robinhood private API",
   "main": "src/index.js", 
