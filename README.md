@@ -35,7 +35,7 @@ This project is a modernization and continuation of the [aurbano/robinhood-node]
 Install the package via npm:
 
 ```bash
-npm install robinhood-node
+npm install robinhood-nodejs
 ```
 
 ---
@@ -73,7 +73,7 @@ The following is an example to demonstrate how the library works. **This is not 
 
 ```javascript
 import * as dotenv from "dotenv";
-import Robinhood from "robinhood-node";
+import Robinhood from "robinhood-nodejs";
 import readline from "readline/promises";
 import fs from "fs/promises";
 
