@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "noEmit": true,
-    "strict": true,
-    "lib": ["es5"]
+      "target": "es6",
+      "module": "nodenext",
+      "moduleResolution": "nodenext",
+      "noEmit": true,
+      "strict": true,
+      "lib": ["es2020", "dom"] // Added "dom" here
   },
   "files": [
-    "./robinhood-types.test.ts"
+      "./robinhood-types.test.ts"
   ]
 }

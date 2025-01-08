@@ -1,39 +1,25 @@
-import * as robinhood from '../../';
+import Robinhood from "../../index.js";
 
-const username = 'robinhood-user'
-const password = 'robinhood-pass'
-const mfaCode  = '12345'
+const username = "robinhood-user";
+const password = "robinhood-pass";
 
-const onLoginSuccess  = () => {
-  console.log('Login success, auth token is: ', api.auth_token)
+async function main() {
+  try {
+    const api = await Robinhood({
+      username,
+      password,
+    });
 
-  api.positions((err, res, body) => {
-    if (err) {
-      console.error('error fetching positions', err)
-    } else if (res.statusCode !== 200) {
-      console.log(`error fetching positions. received status code ${res.statusCode}`)
-    } else {
-      console.log('positions are: ', body)
-    }
-  })
+    console.log("Login success, auth token is: ", api.auth_token());
 
-  api.historicals(
-	'APPL',
-	'5minute',
-	'day',
-    (err, res, body) => {
-      if (err) {
-        console.error('error fetching historicals', err)
-      } else if (res.statusCode !== 200) {
-        console.log(`error fetching historicals. received status code ${res.statusCode}`)
-      } else {
-        console.log('historicals are: ', body)
-      }
-    }
-  )
+    const positions = await api.positions();
+    console.log("positions are: ", positions);
+
+    const historicals = await api.historicals("AAPL", "5minute", "day");
+    console.log("historicals are: ", historicals);
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
-const api = robinhood({
-  username,
-  password
-}, onLoginSuccess)
+main();
