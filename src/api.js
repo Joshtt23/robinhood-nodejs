@@ -18,7 +18,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch accounts");
+      throw new Error("Failed to fetch accounts: " + response);
     }
     return response.json();
   }
@@ -28,7 +28,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch user data");
+      throw new Error("Failed to fetch user data: " + response);
     }
     return response.json();
   }
@@ -38,7 +38,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch dividends data");
+      throw new Error("Failed to fetch dividends data: " + response);
     }
     return response.json();
   }
@@ -56,7 +56,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch earnings data");
+      throw new Error("Failed to fetch earnings data: " + response);
     }
     return response.json();
   }
@@ -74,7 +74,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch orders data");
+      throw new Error("Failed to fetch orders data: " + response);
     }
     return response.json();
   }
@@ -84,7 +84,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch positions data");
+      throw new Error("Failed to fetch positions data: " + response);
     }
     return response.json();
   }
@@ -97,7 +97,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch nonzero positions data");
+      throw new Error("Failed to fetch nonzero positions data: " + response);
     }
     return response.json();
   }
@@ -130,7 +130,7 @@ export default class RobinhoodApi {
       }),
     });
     if (!response.ok) {
-      throw new Error("Failed to place order");
+      throw new Error("Failed to place order: " + response);
     }
     return response.json();
   }
@@ -146,7 +146,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch fundamentals data");
+      throw new Error("Failed to fetch fundamentals data: " + response);
     }
     return response.json();
   }
@@ -164,7 +164,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch popularity data");
+      throw new Error("Failed to fetch popularity data: " + response);
     }
     return response.json();
   }
@@ -180,7 +180,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch quote data");
+      throw new Error("Failed to fetch quote data: " + response);
     }
     return response.json();
   }
@@ -193,7 +193,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch investment profile");
+      throw new Error("Failed to fetch investment profile: " + response);
     }
     return response.json();
   }
@@ -206,7 +206,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch instruments by id");
+      throw new Error("Failed to fetch instruments by id: " + response);
     }
     return response.json();
   }
@@ -221,7 +221,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch instruments");
+      throw new Error("Failed to fetch instruments: " + response);
     }
     return response.json();
   }
@@ -240,7 +240,7 @@ export default class RobinhoodApi {
         headers: this.headers,
       });
       if (!response.ok) {
-        throw new Error("Failed to cancel order");
+        throw new Error("Failed to cancel order: " + response);
       }
       return response.json();
     } else {
@@ -257,7 +257,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch watchlists");
+      throw new Error("Failed to fetch watchlists: " + response);
     }
     return response.json();
   }
@@ -271,7 +271,7 @@ export default class RobinhoodApi {
       }),
     });
     if (!response.ok) {
-      throw new Error("Failed to create watchlist");
+      throw new Error("Failed to create watchlist: " + response);
     }
     return response.json();
   }
@@ -281,7 +281,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch S&P 500 up movers");
+      throw new Error("Failed to fetch S&P 500 up movers: " + response);
     }
     return response.json();
   }
@@ -291,7 +291,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch S&P 500 down movers");
+      throw new Error("Failed to fetch S&P 500 down movers: " + response);
     }
     return response.json();
   }
@@ -308,7 +308,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch splits");
+      throw new Error("Failed to fetch splits: " + response);
     }
     return response.json();
   }
@@ -328,7 +328,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch historicals");
+      throw new Error("Failed to fetch historicals: " + response);
     }
     return response.json();
   }
@@ -338,7 +338,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch URL");
+      throw new Error("Failed to fetch URL: " + response);
     }
     return response.json();
   }
@@ -351,7 +351,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch news");
+      throw new Error("Failed to fetch news: " + response);
     }
     return response.json();
   }
@@ -361,7 +361,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch tag");
+      throw new Error("Failed to fetch tag: " + response);
     }
     return response.json();
   }
@@ -371,7 +371,7 @@ export default class RobinhoodApi {
       headers: this.headers,
     });
     if (!response.ok) {
-      throw new Error("Failed to fetch currency pairs");
+      throw new Error("Failed to fetch currency pairs: " + response);
     }
     return response.json();
   }
@@ -399,7 +399,7 @@ export default class RobinhoodApi {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch crypto data");
+      throw new Error("Failed to fetch crypto data: " + response);
     }
     return response.json();
   }
@@ -412,7 +412,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch options positions");
+      throw new Error("Failed to fetch options positions: " + response);
     }
     return response.json();
   }
@@ -425,7 +425,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch options orders");
+      throw new Error("Failed to fetch options orders: " + response);
     }
     return response.json();
   }
@@ -440,7 +440,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch options dates");
+      throw new Error("Failed to fetch options dates: " + response);
     }
     const { expiration_dates } = await response.json();
     return { expiration_dates, tradable_chain_id };
@@ -456,7 +456,7 @@ export default class RobinhoodApi {
       }
     );
     if (!response.ok) {
-      throw new Error("Failed to fetch available options");
+      throw new Error("Failed to fetch available options: " + response);
     }
     return response.json();
   }
@@ -471,7 +471,7 @@ export default class RobinhoodApi {
       }),
     });
     if (!response.ok) {
-      throw new Error("Failed to expire token");
+      throw new Error("Failed to expire token: " + response);
     }
     return response.json();
   }
