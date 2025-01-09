@@ -6,6 +6,7 @@ export const clientId = "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS";
 export const endpoints = {
   login: "oauth2/token/",
   logout: "oauth2/revoke_token/",
+  oauth2token: "oauth2/token/",
   challenge_respond: "challenge/{}/respond/",
   investment_profile: "user/investment_profile/",
   accounts: "accounts/",
