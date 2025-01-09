@@ -44,24 +44,104 @@ npm install robinhood-nodejs
 
 If you want to contribute to this project, follow these steps:
 
-1. Clone the repository:
+### 1. Clone the Repository
+
+Clone the repository to your local machine and navigate to the project folder:
+
+```bash
+git clone https://github.com/Joshtt23/robinhood-nodejs.git
+cd robinhood-nodejs
+```
+
+---
+
+### 2. Create a Test Program
+
+Set up a separate test project to test changes made to the package:
+
+1. Create a new folder for your test project:
 
    ```bash
-   git clone https://github.com/Joshtt23/robinhood-node.git
-   cd robinhood-node
+   mkdir test-robinhood && cd test-robinhood
    ```
 
-2. Install dependencies:
+2. Initialize a new Node.js project:
 
    ```bash
-   npm install
+   yarn init -y
    ```
 
-3. Run tests (if available):
+3. Create an example program following the [Usage Example](#usage) section from this repository's README. This example will demonstrate how the library works and allow you to test your changes.
+
+---
+
+### 3. Link the Local Package to the Test Program
+
+To test your local changes in the test program, link the package using Yarn:
+
+1. In the cloned `robinhood-nodejs` directory, run:
 
    ```bash
-   npm test
+   yarn link
    ```
+
+2. Navigate to the `test-robinhood` directory (or wherever your test program is located):
+
+   ```bash
+   cd path/to/test-robinhood
+   ```
+
+3. Link the local `robinhood-nodejs` package:
+   ```bash
+   yarn link robinhood-nodejs
+   ```
+
+Now, your test program will use the locally cloned version of the `robinhood-nodejs` package instead of the one from npm.
+
+---
+
+### 4. Run the Test Program
+
+Run your test program to verify that the package works as expected:
+
+```bash
+node test.js
+```
+
+---
+
+### 5. Making and Testing Changes
+
+1. Make changes to the `robinhood-nodejs` package in the cloned repository.
+2. Save the changes and rerun the test program to see the updates:
+   ```bash
+   node test.js
+   ```
+
+If you encounter any issues, ensure you’ve linked the package correctly and that your test program’s `node_modules` is not referencing the npm-installed version.
+
+---
+
+### 6. Unlink the Package (Optional)
+
+When you’re done testing, you can unlink the local package:
+
+1. In the test program directory:
+
+   ```bash
+   yarn unlink robinhood-nodejs
+   ```
+
+2. In the `robinhood-nodejs` directory:
+   ```bash
+   yarn unlink
+   ```
+
+This will restore the test program to use the npm-published version.
+
+---
+
+Feel free to suggest improvements or open a pull request with your changes!
 
 ---
 
