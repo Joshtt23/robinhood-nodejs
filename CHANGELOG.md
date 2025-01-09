@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.4](https://github.com/Joshtt23/robinhood-nodev2/compare/v2.0.0...v2.0.1) (2025-1-08)
+
+<a name="1.6.4"></a>
+
 ## [2.0.0] - 2024-12-12
 
 ### Refactoring
@@ -16,6 +20,8 @@ All notable changes to this project will be documented in this file. See [standa
 - **Improved developer experience:**
   - Enabled constructor-based initialization (`const robinhood = await Robinhood({ username, password });`).
   - Updated examples to reflect the new usage pattern.
+
+<a name="1.6.4"></a>
 
 ### [1.6.5](https://github.com/aurbano/robinhood-node/compare/v1.6.4...v1.6.5) (2019-09-18)
 
