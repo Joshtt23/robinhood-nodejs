@@ -55,48 +55,23 @@ cd robinhood-nodejs
 
 ---
 
-### 2. Create a Test Program
+### 2. Install Dependencies
 
-Set up a separate test project to test changes made to the package:
-
-1. Create a new folder for your test project:
-
-   ```bash
-   mkdir test-robinhood && cd test-robinhood
-   ```
-
-2. Initialize a new Node.js project:
-
-   ```bash
-   yarn init -y
-   ```
-
-3. Create an example program following the [Usage Example](#usage) section from this repository's README. This example will demonstrate how the library works and allow you to test your changes.
+```bash
+npm install
+```
 
 ---
 
-### 3. Link the Local Package to the Test Program
+### 3. Navigate to test program
 
-To test your local changes in the test program, link the package using Yarn:
+To test your local changes in the test program:
 
-1. In the cloned `robinhood-nodejs` directory, run:
+1. Navigate to the test directory
 
-   ```bash
-   yarn link
-   ```
-
-2. Navigate to the `test-robinhood` directory (or wherever your test program is located):
-
-   ```bash
-   cd path/to/test-robinhood
-   ```
-
-3. Link the local `robinhood-nodejs` package:
-   ```bash
-   yarn link robinhood-nodejs
-   ```
-
-Now, your test program will use the locally cloned version of the `robinhood-nodejs` package instead of the one from npm.
+```bash
+cd test
+```
 
 ---
 
@@ -118,27 +93,6 @@ node test.js
    node test.js
    ```
 
-If you encounter any issues, ensure you’ve linked the package correctly and that your test program’s `node_modules` is not referencing the npm-installed version.
-
----
-
-### 6. Unlink the Package (Optional)
-
-When you’re done testing, you can unlink the local package:
-
-1. In the test program directory:
-
-   ```bash
-   yarn unlink robinhood-nodejs
-   ```
-
-2. In the `robinhood-nodejs` directory:
-   ```bash
-   yarn unlink
-   ```
-
-This will restore the test program to use the npm-published version.
-
 ---
 
 Feel free to suggest improvements or open a pull request with your changes!
@@ -153,69 +107,143 @@ The following is an example to demonstrate how the library works. **This is not 
 
 ```javascript
 import * as dotenv from "dotenv";
-import Robinhood from "robinhood-nodejs";
-import readline from "readline/promises";
+import Robinhood, { submitChallenge } from "../src/index.js";
 import fs from "fs/promises";
 
 dotenv.config();
 
 const TOKEN_FILE = "robinhood_auth.json";
 
-async function main() {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
+/**
+ * Check if a given token is expired.
+ */
+async function isTokenExpired(token) {
   try {
-    const username = process.env.ROBINHOOD_USERNAME;
-    const password = process.env.ROBINHOOD_PASSWORD;
-
-    if (!username || !password) {
-      console.error("Error: Missing Robinhood credentials in .env file.");
-      process.exit(1);
-    }
-
-    let authResponse;
-    try {
-      const tokenData = await fs.readFile(TOKEN_FILE, "utf8");
-      authResponse = JSON.parse(tokenData);
-
-      const robinhoodClient = await Robinhood({
-        token: authResponse.access_token,
-      });
-      console.log("Authenticated client:", robinhoodClient);
-
-      const accounts = await robinhoodClient.accounts();
-      console.log("Accounts:", accounts);
-    } catch (err) {
-      authResponse = await Robinhood({ username, password });
-
-      if (authResponse.mfa_required) {
-        const mfaCode = await rl.question("Enter MFA code: ");
-        authResponse = await authResponse.set_mfa_code(mfaCode);
-      }
-
-      if (authResponse.access_token) {
-        const robinhoodClient = await Robinhood({
-          token: authResponse.access_token,
-        });
-        console.log("Authenticated client:", robinhoodClient);
-
-        await fs.writeFile(TOKEN_FILE, JSON.stringify(authResponse));
-        const accounts = await robinhoodClient.accounts();
-        console.log("Accounts:", accounts);
-      } else {
-        console.error("Authentication failed.");
-      }
-    }
-  } catch (err) {
-    console.error("Error:", err);
-  } finally {
-    rl.close();
+    const payload = JSON.parse(
+      Buffer.from(token.split(".")[1], "base64").toString()
+    );
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true; // Assume expired if token is invalid
   }
 }
 
+/**
+ * Handles authentication & API calls.
+ */
+async function main() {
+  try {
+    console.log("🔄 Connecting to Robinhood...");
+
+    let authResponse;
+    let robinhoodClient;
+    let api; // ✅ Store API instance separately
+
+    try {
+      // ✅ Load existing token if available
+      const tokenData = await fs.readFile(TOKEN_FILE, "utf8");
+      authResponse = JSON.parse(tokenData);
+
+      // ✅ Refresh token if expired
+      if (await isTokenExpired(authResponse.access_token)) {
+        console.log("🔄 Token expired, refreshing...");
+
+        try {
+          ({ tokenData: authResponse, api } = await Robinhood({
+            token: authResponse.access_token,
+          }));
+
+          // ✅ Save refreshed token
+          await fs.writeFile(TOKEN_FILE, JSON.stringify(authResponse));
+        } catch (refreshError) {
+          console.log("❌ Token refresh failed, re-authenticating...");
+          throw refreshError;
+        }
+      } else {
+        // ✅ Token valid, initialize API
+        ({ tokenData: authResponse, api } = await Robinhood({
+          token: authResponse.access_token,
+        }));
+      }
+
+      console.log("✅ Authenticated using saved token.");
+    } catch (err) {
+      // ✅ Start fresh authentication if no valid token
+      console.log("🔑 Need to authenticate with username/password");
+      const username = process.env.ROBINHOOD_USERNAME;
+      const password = process.env.ROBINHOOD_PASSWORD;
+
+      if (!username || !password) {
+        console.error("❌ Missing Robinhood credentials in .env file.");
+        process.exit(1);
+      }
+
+      authResponse = await Robinhood({ username, password });
+
+      // ✅ Handle MFA/Challenge if required
+      while (authResponse.status === "awaiting_input") {
+        console.log(authResponse.message);
+
+        const readline = await import("readline/promises");
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+
+        let userInput;
+
+        if (authResponse.authType === "device_confirmation") {
+          console.log("📲 Confirm device approval on your phone.");
+          await rl.question("👉 Press Enter once you have confirmed: ");
+          userInput = null;
+        } else if (authResponse.authType === "mfa") {
+          userInput = await rl.question(
+            "🔑 Enter the MFA code (SMS/Auth App): "
+          );
+        } else {
+          userInput = await rl.question(
+            "Enter the required input (SMS code or auth code): "
+          );
+        }
+
+        rl.close();
+
+        authResponse = await submitChallenge(
+          authResponse.workflow_id,
+          userInput
+        );
+      }
+
+      // ✅ Save new token if authentication succeeds
+      if (authResponse.tokenData.access_token) {
+        console.log("✅ Authenticated successfully.");
+
+        await fs.writeFile(TOKEN_FILE, JSON.stringify(authResponse.tokenData));
+
+        // ✅ Ensure API instance is included
+        ({ tokenData: authResponse, api } = await Robinhood({
+          token: authResponse.tokenData.access_token,
+        }));
+      } else {
+        console.error("❌ Authentication failed:", authResponse);
+        process.exit(1);
+      }
+    }
+
+    // ✅ Test API Call (fetch stock quote)
+    try {
+      console.log("📈 Fetching stock data...");
+      const quote = await api.quote_data("AAPL"); // ✅ Now correctly using API instance
+      console.log("🟢 Stock Quote:", quote);
+    } catch (apiError) {
+      console.error("❌ API call failed:", apiError);
+    }
+  } catch (error) {
+    console.error("❌ Authentication error:", error);
+  }
+}
+
+// 🔥 Start the authentication & test process
 main();
 ```
 
@@ -238,14 +266,14 @@ const robinhoodClient = await Robinhood({ token: authToken });
 ### Account Details
 
 ```javascript
-await robinhoodClient.accounts();
+await robinhoodClient.api.accounts();
 ```
 
 ### Positions
 
 ```javascript
-await robinhoodClient.positions();
-await robinhoodClient.nonzero_positions();
+await robinhoodClient.api.positions();
+await robinhoodClient.api.nonzero_positions();
 ```
 
 ### Trading
@@ -253,7 +281,7 @@ await robinhoodClient.nonzero_positions();
 #### Place a Buy Order
 
 ```javascript
-await robinhoodClient.place_buy_order({
+await robinhoodClient.api.place_buy_order({
   instrument: { url: "instrument_url", symbol: "AAPL" },
   bid_price: 150,
   quantity: 1,
@@ -263,7 +291,7 @@ await robinhoodClient.place_buy_order({
 #### Place a Sell Order
 
 ```javascript
-await robinhoodClient.place_sell_order({
+await robinhoodClient.api.place_sell_order({
   instrument: { url: "instrument_url", symbol: "AAPL" },
   bid_price: 160,
   quantity: 1,
@@ -273,17 +301,17 @@ await robinhoodClient.place_sell_order({
 ### Market Data
 
 ```javascript
-await robinhoodClient.fundamentals("AAPL");
-await robinhoodClient.quote_data("TSLA");
-await robinhoodClient.historicals("AAPL", "day", "1month");
-await robinhoodClient.news("GOOGL");
+await robinhoodClient.api.fundamentals("AAPL");
+await robinhoodClient.api.quote_data("TSLA");
+await robinhoodClient.api.historicals("AAPL", "day", "1month");
+await robinhoodClient.api.news("GOOGL");
 ```
 
 ### Options & Crypto
 
 ```javascript
-await robinhoodClient.get_crypto("BTC");
-await robinhoodClient.options_positions();
+await robinhoodClient.api.get_crypto("BTC");
+await robinhoodClient.api.options_positions();
 ```
 
 ---

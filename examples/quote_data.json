@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "ask_price": "244.840000",
+      "ask_size": 40,
+      "venue_ask_time": "2025-01-09T01:00:00.217516254Z",
+      "bid_price": "239.950000",
+      "bid_size": 41,
+      "venue_bid_time": "2025-01-09T01:00:00.217516254Z",
+      "last_trade_price": "242.720000",
+      "venue_last_trade_time": "2025-01-08T20:59:59.995759227Z",
+      "last_extended_hours_trade_price": "242.350000",
+      "last_non_reg_trade_price": "242.350000",
+      "venue_last_non_reg_trade_time": "2025-01-09T00:54:34.735295783Z",
+      "previous_close": "242.210000",
+      "adjusted_previous_close": "242.210000",
+      "previous_close_date": "2025-01-07",
+      "symbol": "AAPL",
+      "trading_halted": false,
+      "has_traded": true,
+      "last_trade_price_source": "nls",
+      "last_non_reg_trade_price_source": "nls",
+      "updated_at": "2025-01-09T01:00:00Z",
+      "instrument": "https://api.robinhood.com/instruments/450dfc6d-5510-4d40-abfb-f633b7d9be3e/",
+      "instrument_id": "450dfc6d-5510-4d40-abfb-f633b7d9be3e",
+      "state": "active"
+    }
+  ]
+}

@@ -31,3 +31,4 @@ node_modules
 .nyc_output
 
 package-lock.json
+test/robinhood_auth.json

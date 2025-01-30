@@ -1,241 +1,236 @@
 import fetch from "node-fetch";
 import { robinhoodApiBaseUrl, clientId, endpoints } from "./constants.js";
-import { v4 as uuidv4 } from "uuid";
+import pkg from "uuid";
+const { v4: uuidv4 } = pkg;
 
 const defaultHeaders = {
-    Accept: "*/*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Accept-Language": "en-US,en;q=1",
-
-    "X-Robinhood-API-Version": "1.431.4",
-    "Connection": "keep-alive",
-    "User-Agent": "*"
-
+  Accept: "*/*",
+  "Accept-Encoding": "gzip, deflate, br, zstd",
+  "Accept-Language": "en-US,en;q=0.9",
+  origin: "https://robinhood.com",
+  referer: "https://robinhood.com/",
+  "X-Robinhood-API-Version": "1.431.4",
+  Connection: "keep-alive",
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0",
+  "x-timezone-id": "America/New_York",
 };
 
-export async function validateSheriffId(deviceToken, workflowId, mfaCode) {
-    try {
-        console.log("Starting Sheriff ID validation...");
+// Store authentication states for tracking ongoing workflows
+const workflowStates = new Map();
 
-        // 1. Make a POST request to /pathfinder/user_machine/
-        const machineUrl = "https://api.robinhood.com/pathfinder/user_machine/";
-        const machinePayload = {
+function saveWorkflowState(id, state) {
+  workflowStates.set(id, state);
+}
+
+function getWorkflowState(id) {
+  return workflowStates.get(id);
+}
+
+function deleteWorkflowState(id) {
+  workflowStates.delete(id);
+}
+
+// **START AUTHENTICATION**
+export async function authenticate(credentials) {
+  console.log("🔑 Starting authentication...");
+  let { username, password, deviceToken } = credentials;
+
+  if (!deviceToken) {
+    deviceToken = uuidv4();
+  }
+  console.log("🆔 Device token:", deviceToken);
+
+  const headers = {
+    ...defaultHeaders,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+
+  const payload = {
+    client_id: clientId,
+    grant_type: "password",
+    username,
+    password,
+    device_token: deviceToken,
+    scope: "internal",
+    challenge_type: "sms", // Default, but can change based on workflow
+    expires_in: 86400,
+  };
+
+  try {
+    const response = await fetch(robinhoodApiBaseUrl + endpoints.login, {
+      method: "POST",
+      headers,
+      body: new URLSearchParams(payload),
+    });
+
+    const data = await response.json();
+
+    if (data.verification_workflow) {
+      const workflowId = uuidv4();
+
+      // ✅ Call user_machine endpoint
+      const machineResponse = await fetch(
+        `${robinhoodApiBaseUrl}/pathfinder/user_machine/`,
+        {
+          method: "POST",
+          headers: { ...defaultHeaders, "Content-Type": "application/json" },
+          body: JSON.stringify({
             device_id: deviceToken,
             flow: "suv",
-            input: { workflow_id: workflowId },
+            input: { workflow_id: data.verification_workflow.id },
+          }),
+        }
+      );
+      const machineData = await machineResponse.json();
+      if (!machineData.id) throw new Error("❌ Machine ID not found!");
+
+      // ✅ Fetch challenge details
+      const inquiriesResponse = await fetch(
+        `${robinhoodApiBaseUrl}/pathfinder/inquiries/${machineData.id}/user_view/`
+      );
+      const inquiriesData = await inquiriesResponse.json();
+
+      const challenge = inquiriesData.context?.sheriff_challenge;
+      if (!challenge) throw new Error("❌ Challenge not found!");
+
+      // ✅ Save workflow state
+      saveWorkflowState(workflowId, {
+        workflowId: data.verification_workflow.id,
+        machineId: machineData.id,
+        deviceToken,
+        challengeId: challenge.id,
+        challengeType: challenge.type,
+        username,
+        password,
+      });
+
+      if (challenge.type === "sms") {
+        return {
+          status: "awaiting_input",
+          workflow_id: workflowId,
+          message: "📩 Enter the SMS code:",
         };
-
-        const machineResponse = await fetch(machineUrl, {
-            method: "POST",
-            headers: {
-                ...defaultHeaders,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(machinePayload),
-        });
-
-        const machineData = await machineResponse.json();
-
-        if (!machineData.id) {
-            throw new Error("Id not returned in user-machine call");
-        }
-
-        // 2. Make a GET request to /pathfinder/inquiries/{id}/user_view/
-        const inquiriesUrl = `https://api.robinhood.com/pathfinder/inquiries/${machineData.id}/user_view/`;
-
-        const inquiriesResponse = await fetch(inquiriesUrl);
-
-        const inquiriesData = await inquiriesResponse.json();
-
-        // Extract the challenge_id
-        const challengeId =
-            inquiriesData.type_context?.context?.sheriff_challenge?.id;
-        if (!challengeId) {
-            throw new Error("Sheriff challenge id not found in response");
-        }
-
-        // 3. Send the mfa_code to /challenge/{challenge_id}/respond/
-        const challengeUrl = `https://api.robinhood.com/challenge/${challengeId}/respond/`;
-        const challengePayload = {
-            response: mfaCode,
+      } else {
+        return {
+          status: "awaiting_input",
+          workflow_id: workflowId,
+          message: "📲 Confirm device approval and press Enter:",
         };
-
-        const challengeResponse = await fetch(challengeUrl, {
-            method: "POST",
-            headers: {
-                ...defaultHeaders,
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams(challengePayload),
-        });
-
-
-        const challengeData = await challengeResponse.json();
-
-        if (challengeData.status !== "validated") {
-            throw new Error(
-                `Challenge validation failed: ${JSON.stringify(challengeData)}`
-            );
-        }
-
-        // 4. Send a POST request to /pathfinder/inquiries/{id}/user_view/ to continue
-        const finalPayload = {
-            sequence: 0,
-            user_input: { status: "continue" },
-        };
-
-        const finalResponse = await fetch(inquiriesUrl, {
-            method: "POST",
-            headers: {
-                ...defaultHeaders,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(finalPayload),
-        });
-
-
-        const finalData = await finalResponse.json();
-
-        if (finalData.type_context?.result !== "workflow_status_approved") {
-            throw new Error("Workflow status not approved");
-        }
-
-        console.log("Sheriff ID validation successful!");
-        return true;
-    } catch (error) {
-        console.error("Sheriff ID Validation Error:", error);
-        throw error;
+      }
     }
+
+    if (data.access_token) {
+      return { status: "success", access_token: data.access_token };
+    }
+
+    throw new Error("❌ Authentication failed!");
+  } catch (error) {
+    console.error("⚠️ Auth Error:", error);
+    throw new Error(`Authentication failed: ${error.message}`);
+  }
 }
 
-export async function respondToChallenge(challengeId, challengeResponse) {
-    const url =
-        robinhoodApiBaseUrl + endpoints.challenge_respond.replace("{}", challengeId);
+// **SUBMIT USER INPUT (SMS OR DEVICE APPROVAL)**
+export async function submitChallenge(workflowId, userInput = null) {
+  const state = getWorkflowState(workflowId);
+  if (!state) throw new Error("❌ Invalid workflow ID!");
 
-    const payload = {
-        response: challengeResponse,
-    };
+  try {
+    if (state.challengeType === "sms") {
+      console.log("📩 Sending SMS code...");
+      const smsResponse = await fetch(
+        `${robinhoodApiBaseUrl}/challenge/${state.challengeId}/respond/`,
+        {
+          method: "POST",
+          headers: {
+            ...defaultHeaders,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({ response: userInput }),
+        }
+      );
 
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: {
-                ...defaultHeaders,
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: new URLSearchParams(payload),
-        });
+      const smsData = await smsResponse.json();
+      if (smsData.status !== "validated") {
+        throw new Error("❌ SMS validation failed!");
+      }
+    } else {
+      console.log("📲 Checking device approval...");
+      const pollResponse = await fetch(
+        `${robinhoodApiBaseUrl}/push/${state.challengeId}/get_prompts_status/`,
+        {
+          headers: defaultHeaders,
+        }
+      );
+      const pollData = await pollResponse.json();
+      console.log("🛂 Poll Response:", pollData);
 
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        throw error;
+      if (pollData.challenge_status !== "validated") {
+        throw new Error("❌ Device approval failed!");
+      }
     }
+
+    return await finalizeAuthentication(state);
+  } catch (error) {
+    console.error("⚠️ Submission Error:", error);
+    throw error;
+  }
 }
 
-export async function authenticate(credentials) {
-    console.log("Starting authentication...");
-    let { username, password, mfa_code, deviceToken } = credentials;
+// **FINALIZE AUTHENTICATION**
+export async function finalizeAuthentication(state) {
+  console.log("✅ Challenge validated! Sending final approval...");
 
-    if (!deviceToken) {
-        deviceToken = uuidv4();
-    }
-    console.log("Device token:", deviceToken);
-
-    const headers = {
+  // ✅ Step 1: Send a POST request to finalize the verification
+  const finalizeResponse = await fetch(
+    `${robinhoodApiBaseUrl}/pathfinder/inquiries/${state.machineId}/user_view/`,
+    {
+      method: "POST",
+      headers: {
         ...defaultHeaders,
-        "Content-Type": "application/x-www-form-urlencoded",
-        Host: "api.robinhood.com",
-        Referer: "https://robinhood.com/",
-        Origin: "https://robinhood.com",
-    };
-
-    const payload = {
-        client_id: clientId,
-        expires_in: 86400,
-        grant_type: "password",
-        password: password,
-        scope: "internal",
-        username: username,
-        challenge_type: "sms",
-        device_token: deviceToken,
-        try_passkeys: false,
-        token_request_path: '/login',
-        create_read_only_secondary_token: true,
-        request_id: '848bd19e-02bc-45d9-99b5-01bce5a79ea7'
-
-    };
-
-    if (mfa_code) {
-        payload.mfa_code = mfa_code;
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sequence: 0,
+        user_input: { status: "continue" },
+      }),
     }
+  );
 
-    try {
-        const response = await fetch(robinhoodApiBaseUrl + endpoints.login, {
-            method: "POST",
-            headers: headers,
-            body: new URLSearchParams(payload),
-        });
+  const finalizeData = await finalizeResponse.json();
+  console.log("🔄 Final Approval Response:", finalizeData);
 
+  // ✅ Step 2: Request the final authentication token
+  console.log("🔓 Requesting final authentication token...");
+  const tokenResponse = await fetch(robinhoodApiBaseUrl + endpoints.login, {
+    method: "POST",
+    headers: {
+      ...defaultHeaders,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: clientId,
+      grant_type: "password",
+      device_token: state.deviceToken,
+      scope: "internal",
+      expires_in: 86400,
+      create_read_only_secondary_token: true,
+      token_request_path: "/login",
+      try_passkeys: false,
+      username: state.username,
+      password: state.password,
+    }),
+  });
 
-        const data = await response.json();
+  const tokenData = await tokenResponse.json();
+  console.log("🔑 Auth Token Response:", tokenData);
 
-        if (data.mfa_required) {
-            console.log("MFA required.");
-            return {
-                mfa_required: true,
-                set_mfa_code: async (mfaCode) => {
-                    // Log the received MFA code
-                    console.log("Received MFA code:", mfaCode);
+  if (!tokenData.access_token) {
+    throw new Error("❌ Failed to retrieve access token.");
+  }
 
-                    const mfaOptions = {
-                        ...credentials,
-                        deviceToken: deviceToken,
-                        mfa_code: mfaCode,
-                    };
-                    return authenticate(mfaOptions);
-                },
-            };
-        }
+  deleteWorkflowState(state.workflowId); // ✅ Clean up workflow state
 
-        if (data.challenge) {
-            console.log("Challenge required.");
-            return {
-                challenge_required: true,
-                challenge_id: data.challenge.id,
-                set_challenge_response: async (challengeResponse) => {
-                    const challengeResult = await respondToChallenge(
-                        data.challenge.id,
-                        challengeResponse
-                    );
-                    // ... (handle challengeResult as needed)
-                    // update header 'X-ROBINHOOD-CHALLENGE-RESPONSE-ID', challenge_id)
-                    
-                    // Log the challenge result
-                    console.log("Challenge result:", challengeResult);
-
-                    return authenticate(credentials); // Retry authentication
-                },
-            };
-        }
-
-        if (data.verification_workflow) {
-            console.log("Verification workflow required.");
-            return {
-                verification_required: true,
-                workflow_id: data.verification_workflow.id,
-                deviceToken: deviceToken,
-            };
-        }
-
-        if (response.status === 200 && data.access_token) {
-            console.log("Authentication successful!");
-            return data;
-        }
-
-        throw new Error(`Authentication failed: ${JSON.stringify(data)}`);
-    } catch (error) {
-        console.error("Auth Error:", error);
-        throw new Error(`Authentication failed: ${error.message}`);
-    }
+  return { status: "success", tokenData };
 }
