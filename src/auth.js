@@ -1,7 +1,6 @@
 import fetch from "node-fetch";
 import { robinhoodApiBaseUrl, clientId, endpoints } from "./constants.js";
-import pkg from "uuid";
-const { v4: uuidv4 } = pkg;
+import { v4 as uuidv4 } from "uuid";
 
 const defaultHeaders = {
   Accept: "*/*",
