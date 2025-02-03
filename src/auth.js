@@ -123,7 +123,7 @@ export async function authenticate(credentials) {
       return { status: "success", access_token: data.access_token };
     }
 
-    throw new Error("❌ Authentication failed!");
+    return { status: "error", message: data.detail };
   } catch (error) {
     console.error("⚠️ Auth Error:", error);
     throw new Error(`Authentication failed: ${error.message}`);
