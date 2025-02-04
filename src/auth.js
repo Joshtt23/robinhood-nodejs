@@ -54,6 +54,10 @@ export async function authenticate(credentials) {
     scope: "internal",
     challenge_type: "sms", // Default, but can change based on workflow
     expires_in: 86400,
+    long_session: true,
+    create_read_only_secondary_token: true,
+    token_request_path: "/login",
+    try_passkeys: false,
   };
 
   try {
@@ -82,16 +86,21 @@ export async function authenticate(credentials) {
         }
       );
       const machineData = await machineResponse.json();
-      if (!machineData.id) throw new Error("❌ Machine ID not found!");
+      console.log("🤖 Machine Response:", machineData);
+      if (!machineData.id) {
+        return { status: "error", message: "❌ Machine ID not found!" };
+      }
 
       // ✅ Fetch challenge details
       const inquiriesResponse = await fetch(
         `${robinhoodApiBaseUrl}/pathfinder/inquiries/${machineData.id}/user_view/`
       );
       const inquiriesData = await inquiriesResponse.json();
-
+      console.log("🔍 Inquiries Response:", inquiriesData);
       const challenge = inquiriesData.context?.sheriff_challenge;
-      if (!challenge) throw new Error("❌ Challenge not found!");
+      console.log("🛡️ Challenge:", challenge);
+      if (!challenge)
+        return { status: "error", message: "❌ Challenge not found!" };
 
       // ✅ Save workflow state
       saveWorkflowState(workflowId, {
@@ -219,6 +228,7 @@ export async function finalizeAuthentication(state) {
       try_passkeys: false,
       username: state.username,
       password: state.password,
+      long_session: true,
     }),
   });
 
