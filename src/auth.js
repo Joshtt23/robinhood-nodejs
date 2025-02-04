@@ -68,6 +68,7 @@ export async function authenticate(credentials) {
     });
 
     const data = await response.json();
+    console.log("🔐 Auth Response:", data);
 
     if (data.verification_workflow) {
       const workflowId = uuidv4();
