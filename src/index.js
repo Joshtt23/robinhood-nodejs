@@ -36,7 +36,10 @@ export default async function Robinhood(credentials) {
         authResponse.status !== "success" ||
         !authResponse.tokenData.access_token
       ) {
-        throw new Error("❌ Authentication failed: Unexpected response");
+        return {
+          status: "error",
+          message: `❌ Authentication failed!: ${authResponse.message}`,
+        };
       }
 
       console.log("✅ Authentication successful!");
