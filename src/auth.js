@@ -242,5 +242,5 @@ export async function finalizeAuthentication(state) {
 
   deleteWorkflowState(state.workflowId); // ✅ Clean up workflow state
 
-  return { status: "success", tokenData };
+  return { status: "success", deviceToken: state.deviceToken, ...tokenData };
 }

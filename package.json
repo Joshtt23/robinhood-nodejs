@@ -1,9 +1,9 @@
 {
   "name": "robinhood-nodejs",
-  "version": "2.0.9",
+  "version": "2.0.10",
   "description": "Comprehensive Node.js API wrapper for the Robinhood private API",
-  "main": "src/index.js", 
-  "typings": "robinhood.d.ts", 
+  "main": "src/index.js",
+  "typings": "robinhood.d.ts",
   "scripts": {
     "test": "nyc ava && npm run typescript",
     "typescript": "tsc --project test/types/tsconfig.json",
@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Joshtt23/robinhood-node.git" 
+    "url": "https://github.com/Joshtt23/robinhood-node.git"
   },
   "keywords": [
     "robinhood",
@@ -20,21 +20,22 @@
     "stock",
     "finance"
   ],
-  "author": "Joshua Traver", 
+  "author": "Joshua Traver",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Joshtt23/robinhood-node/issues" 
+    "url": "https://github.com/Joshtt23/robinhood-node/issues"
   },
-  "homepage": "https://github.com/Joshtt23/robinhood-node", 
+  "homepage": "https://github.com/Joshtt23/robinhood-node",
   "devDependencies": {
     "ava": "^0.17.0",
     "coveralls": "^2.11.15",
     "nyc": "^10.0.0",
     "standard-version": "^7.0.0",
-    "typescript": "~4.9.5" 
+    "typescript": "~4.9.5",
+    "uuid": "^11.0.5"
   },
-  "dependencies": { 
-    "node-fetch": "^3.3.1" 
+  "dependencies": {
+    "node-fetch": "^3.3.1"
   },
-  "type": "module" 
+  "type": "module"
 }

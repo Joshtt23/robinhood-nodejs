@@ -3,6 +3,7 @@ import {
   robinhoodApiBaseUrl,
   endpoints,
   currencyPairsUrl,
+  clientId,
 } from "./constants.js";
 
 export default class RobinhoodApi {
@@ -487,41 +488,41 @@ export default class RobinhoodApi {
     }
   }
 
-  async refresh_token(refreshToken) {
-    const response = await fetch(robinhoodApiBaseUrl + endpoints.oauth2token, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-        client_id: "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS", // Add the client_id from the old implementation
-        scope: "internal",
-        expires_in: 86400,
-      }),
+  async refresh_token({ refreshToken, deviceToken }) {
+    // Remove any existing Authorization header as shown in the Python code
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded", // Changed to form-urlencoded
+    };
+
+    // Convert payload to URLSearchParams as it should be form data, not JSON
+    const payload = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId,
+      scope: "internal",
+      expires_in: "86400",
+      device_token: deviceToken,
     });
 
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(
-        `Failed to refresh token: ${response.status} ${response.statusText}, Body: ${body}`
-      );
+    try {
+      const response = await fetch(robinhoodApiBaseUrl + endpoints.login, {
+        method: "POST",
+        headers: headers,
+        body: payload,
+      });
+
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(
+          `Failed to refresh token: ${response.status} ${response.statusText}, Body: ${body}`
+        );
+      }
+
+      const data = await response.json();
+      return { device_token: deviceToken, ...data };
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      throw error;
     }
-
-    const data = await response.json();
-
-    // Update the instance with new tokens
-    this.authToken = data.access_token;
-    this.headers = {
-      Authorization: `Bearer ${data.access_token}`,
-    };
-
-    return {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token,
-      token_type: data.token_type,
-      scope: data.scope,
-    };
   }
 }
