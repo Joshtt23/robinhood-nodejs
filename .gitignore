@@ -33,3 +33,4 @@ node_modules
 package-lock.json
 test/robinhood_auth.json
 **/.env
+test/.env
