@@ -11,6 +11,7 @@ export default class RobinhoodApi {
     this.authToken = authToken;
     this.headers = {
       Authorization: `Bearer ${authToken}`,
+      "Content-Type": "application/json;charset=UTF-8",
     };
   }
 
