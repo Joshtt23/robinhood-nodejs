@@ -1,6 +1,6 @@
 // src/constants.js
 export const robinhoodApiBaseUrl = "https://api.robinhood.com/";
-export const currencyPairsUrl = "https://nummus.robinhood.com/currency_pairs/";
+export const cryptoApiBaseUrl = "https://nummus.robinhood.com/";
 export const clientId = "c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS";
 
 export const endpoints = {
@@ -50,4 +50,5 @@ export const endpoints = {
   tag: "midlands/tags/tag/",
 
   crypto: "marketdata/forex/quotes/",
+  crypto_holdings: "holdings/",
 };
