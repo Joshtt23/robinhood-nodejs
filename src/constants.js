@@ -51,4 +51,5 @@ export const endpoints = {
 
   crypto: "marketdata/forex/quotes/",
   crypto_holdings: "holdings/",
+  currency_pairs: "currency_pairs/",
 };
