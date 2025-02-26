@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
 import {
   robinhoodApiBaseUrl,
+  cryptoApiBaseUrl,
   endpoints,
-  currencyPairsUrl,
   clientId,
 } from "./constants.js";
 
@@ -94,6 +94,19 @@ export default class RobinhoodApi {
   async nonzero_positions() {
     const response = await fetch(
       robinhoodApiBaseUrl + endpoints.positions + "?nonzero=true",
+      {
+        headers: this.headers,
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to fetch nonzero positions data: " + response);
+    }
+    return response.json();
+  }
+
+  async crypto_holdings() {
+    const response = await fetch(
+      cryptoApiBaseUrl + endpoints.crypto_holdings,
       {
         headers: this.headers,
       }
@@ -369,7 +382,7 @@ export default class RobinhoodApi {
   }
 
   async get_currency_pairs() {
-    const response = await fetch(currencyPairsUrl, {
+    const response = await fetch(cryptoApiBaseUrl + endpoints.currency_pairs, {
       headers: this.headers,
     });
     if (!response.ok) {
